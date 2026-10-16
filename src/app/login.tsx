@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { mainStyles } from "../../styles/main";
-import { useAuthStore } from "../../store/authStore";
+import { useAuthStore } from "../store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function AuthScreen() {
