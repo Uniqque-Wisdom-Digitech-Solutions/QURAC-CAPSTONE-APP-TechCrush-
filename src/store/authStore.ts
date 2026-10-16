@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
 interface AuthState {
   isAuthenticated: boolean;
   email: string | null;
@@ -23,19 +22,14 @@ export const useAuthStore = create<AuthState>()(
       signup: (email: string) => {
         const normalizedEmail = email.trim().toLowerCase();
 
-        const alreadyRegistered = get().registeredEmails.includes(
-          normalizedEmail
-        );
+        const alreadyRegistered = get().registeredEmails.includes(normalizedEmail);
 
         if (alreadyRegistered) {
-          return false;
+          return false; // Triggers "An account with this email already exists" in your UI
         }
 
         set({
-          registeredEmails: [
-            ...get().registeredEmails,
-            normalizedEmail,
-          ],
+          registeredEmails: [...get().registeredEmails, normalizedEmail],
           isAuthenticated: true,
           email: normalizedEmail,
         });
@@ -46,12 +40,10 @@ export const useAuthStore = create<AuthState>()(
       login: (email: string) => {
         const normalizedEmail = email.trim().toLowerCase();
 
-        const accountExists = get().registeredEmails.includes(
-          normalizedEmail
-        );
+        const accountExists = get().registeredEmails.includes(normalizedEmail);
 
         if (!accountExists) {
-          return false;
+          return false; // Triggers "No account found" error in your UI
         }
 
         set({
@@ -71,13 +63,12 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'qurac-auth-storage',
-
       storage: createJSONStorage(() => AsyncStorage),
-
-      partialize: (state) =>
-        ({
-          registeredEmails: state.registeredEmails,
-        }) as AuthState,
+      partialize: (state) => ({
+        registeredEmails: state.registeredEmails,
+        isAuthenticated: state.isAuthenticated,
+        email: state.email,
+      }),
     }
   )
 );

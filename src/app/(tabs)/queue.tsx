@@ -151,12 +151,15 @@ export default function PatientQueueScreen() {
                   </View>
                 </View>
 
-                {/* View button now routes directly to clinical triage details */}
+                {/* View button routes directly with patient id parameter */}
                 <TouchableOpacity 
                   style={mainStyles.compactOutlineButton}
                   onPress={() => {
                     setSelectedPatient(patient.id);
-                    router.push('/patient-details');
+                    router.push({
+                      pathname: '/patient-details',
+                      params: { id: patient.id },
+                    });
                   }}
                 >
                   <Text style={mainStyles.compactOutlineButtonText}>View</Text>

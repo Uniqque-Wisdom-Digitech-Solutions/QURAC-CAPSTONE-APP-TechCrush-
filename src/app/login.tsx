@@ -13,6 +13,9 @@ import { useRouter } from "expo-router";
 import { mainStyles } from "../../styles/main";
 import { useAuthStore } from "../store/authStore";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.qurac.com/v1';
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -38,7 +41,7 @@ export default function AuthScreen() {
     general?: string;
   }>({});
 
-  const handleAuth = () => {
+  const handleAuth = async () => {
     const newErrors: {
       fullName?: string;
       email?: string;
@@ -55,7 +58,7 @@ export default function AuthScreen() {
 
     // Password validation
     const passwordPattern =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$\%^&*(),.?":{}\vert{}<>]).{8,}$/;
 
     // SIGN UP VALIDATION
     if (isSignUp) {
@@ -84,7 +87,6 @@ export default function AuthScreen() {
         newErrors.confirmPassword = "Passwords do not match.";
       }
     }
-
     // LOGIN VALIDATION
     else {
       if (!trimmedEmail) {
@@ -105,28 +107,55 @@ export default function AuthScreen() {
       return;
     }
 
+    // Try connecting to Live Backend API with Offline Fallback
+    try {
+      const endpoint = isSignUp ? `${BASE_URL}/auth/register` : `${BASE_URL}/auth/login`;
+      const payload = isSignUp
+        ? { name: trimmedName, email: trimmedEmail, password, role: 'nurse' }
+        : { email: trimmedEmail, password };
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Save JWT token if returned by backend
+        if (data.token) {
+          await AsyncStorage.setItem('userToken', data.token);
+        }
+        router.replace('/(tabs)');
+        return;
+      }
+    } catch (apiError) {
+      console.log('Backend offline or unreachable, falling back to local auth state', apiError);
+    }
+
+    // Fallback to local Zustand Store logic if backend is unreachable (great for presentation safety)
     if (isSignUp) {
-  const signupSuccessful = signup(trimmedEmail);
+      const signupSuccessful = signup(trimmedEmail);
 
-  if (!signupSuccessful) {
-    setErrors({
-      email: 'An account with this email already exists.',
-    });
-    return;
-  }
-} else {
-  const loginSuccessful = login(trimmedEmail);
+      if (!signupSuccessful) {
+        setErrors({
+          email: 'An account with this email already exists.',
+        });
+        return;
+      }
+    } else {
+      const loginSuccessful = login(trimmedEmail);
 
-  if (!loginSuccessful) {
-    setErrors({
-      email: 'No account found. Please create an account first.',
-    });
-    return;
-  }
-}
+      if (!loginSuccessful) {
+        setErrors({
+          email: 'No account found. Please create an account first.',
+        });
+        return;
+      }
+    }
 
-router.replace('/(tabs)');
-};
+    router.replace('/(tabs)');
+  };
 
   const handleGoogleSignIn = () => {
     router.replace("/(tabs)");

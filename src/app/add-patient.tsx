@@ -31,7 +31,7 @@ export default function AddPatientScreen() {
       status,
     });
 
-    // Instantly navigate back to the patients directory without blocking alerts
+    // Instantly navigate back to the patients directory
     router.back();
   };
 
@@ -92,10 +92,10 @@ export default function AddPatientScreen() {
             ))}
           </View>
 
-          {/* Initial Visit Status Selector */}
+          {/* Initial Visit Status Selector (Updated 'Active' to 'Admission') */}
           <Text style={{ fontSize: 13, fontWeight: '600', color: '#063154', marginBottom: 6 }}>Visit Status</Text>
           <View style={{ flexDirection: 'row', marginBottom: 24 }}>
-            {['Needs Attention', 'Upcoming', 'Active'].map((item) => (
+            {['Needs Attention', 'Upcoming', 'Admission'].map((item) => (
               <TouchableOpacity
                 key={item}
                 style={{
@@ -104,7 +104,7 @@ export default function AddPatientScreen() {
                   backgroundColor: status === item ? '#063154' : '#F0F0F0',
                   borderRadius: 8,
                   alignItems: 'center',
-                  marginRight: item !== 'Active' ? 6 : 0,
+                  marginRight: item !== 'Admission' ? 6 : 0,
                 }}
                 onPress={() => setStatus(item)}
               >

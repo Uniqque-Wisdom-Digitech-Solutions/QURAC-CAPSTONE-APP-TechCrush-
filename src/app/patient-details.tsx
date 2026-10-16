@@ -1,15 +1,41 @@
+import React from "react";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { mainStyles } from "../../styles/main";
 
+// Zustand store import
+import { useAppStore } from "../store/useAppStore";
+
 export default function PatientDetailsScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ id?: string }>();
+
+  // Fetch patient list and selected ID from store
+  const patients = useAppStore((state) => state.patients);
+  const storeSelectedId = useAppStore((state) => state.selectedPatientId);
+  const setSelectedPatient = useAppStore((state) => state.setSelectedPatient);
+
+  // Determine active patient ID (either from navigation params or store selection)
+  const activeId = params.id || storeSelectedId;
+
+  // Find dynamic patient from store, falling back to default if not found
+  const rawPatient =
+    patients.find((p) => p.id === activeId) ||
+    patients[0] || {
+      id: "P-00123",
+      name: "Sarah Ahmed",
+      avatarText: "SA",
+      gender: "Female",
+    };
+
+  // Type cast to prevent strict TypeScript property checking on custom fields
+  const patient: any = rawPatient;
 
   return (
     <SafeAreaView style={mainStyles.safeArea}>
-      <ScrollView style={mainStyles.container}>
+      <ScrollView style={mainStyles.container} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Top Brand Header */}
         <View style={mainStyles.brandHeaderRow}>
           <View>
@@ -75,25 +101,25 @@ export default function PatientDetailsScreen() {
               <Text
                 style={[mainStyles.needsAttentionAvatarText, { fontSize: 14 }]}
               >
-                SA
+                {patient.avatarText || patient.name?.substring(0, 2).toUpperCase()}
               </Text>
             </View>
             <View style={mainStyles.patientCardDetails}>
               <Text style={mainStyles.needsAttentionPatientName}>
-                Sarah Ahmed
+                {patient.name}
               </Text>
               <Text style={mainStyles.needsAttentionPatientSubText}>
-                Patient ID: P-00123
+                Patient ID: {patient.id}
               </Text>
               <Text style={mainStyles.needsAttentionPatientSubText}>
-                38 years • Female
+                {patient.age ? `${patient.age} • ` : ""}{patient.gender}
               </Text>
             </View>
           </View>
 
           <View style={mainStyles.badgeAwaitingTriage}>
             <Text style={mainStyles.badgeAwaitingTriageText}>
-              Awaiting Triage
+              {patient.status || "Awaiting Triage"}
             </Text>
           </View>
         </View>
@@ -107,23 +133,29 @@ export default function PatientDetailsScreen() {
 
           <View style={mainStyles.detailDataRow}>
             <Text style={mainStyles.detailDataLabel}>Visit Type</Text>
-            <Text style={mainStyles.detailDataValue}>General Consultation</Text>
+            <Text style={mainStyles.detailDataValue}>
+              {patient.visitType || "General Consultation"}
+            </Text>
           </View>
 
           <View style={mainStyles.detailDataRow}>
             <Text style={mainStyles.detailDataLabel}>Visit Source</Text>
-            <Text style={mainStyles.detailDataValue}>Appointment</Text>
+            <Text style={mainStyles.detailDataValue}>
+              {patient.visitSource || "Appointment"}
+            </Text>
           </View>
 
           <View style={mainStyles.detailDataRow}>
             <Text style={mainStyles.detailDataLabel}>Arrival Time</Text>
-            <Text style={mainStyles.detailDataValue}>08:15 AM</Text>
+            <Text style={mainStyles.detailDataValue}>
+              {patient.arrivalTime || "08:15 AM"}
+            </Text>
           </View>
 
           <View style={mainStyles.detailDataRow}>
             <Text style={mainStyles.detailDataLabel}>Waiting Time</Text>
             <Text style={[mainStyles.detailDataValue, { color: "#D32F2F" }]}>
-              18 minutes
+              {patient.waitTime || "18 minutes"}
             </Text>
           </View>
         </View>
@@ -136,7 +168,7 @@ export default function PatientDetailsScreen() {
           </View>
 
           <Text style={mainStyles.needsAttentionPatientSubText}>
-            Headache and fever for 2 days. Feeling Weak and loss of appetite
+            {patient.reasonForVisit || "Headache and fever for 2 days. Feeling Weak and loss of appetite"}
           </Text>
         </View>
 
@@ -152,7 +184,9 @@ export default function PatientDetailsScreen() {
           </View>
 
           <View style={mainStyles.allergiesBox}>
-            <Text style={mainStyles.allergiesText}>No known allergies</Text>
+            <Text style={mainStyles.allergiesText}>
+              {patient.allergies || "No known allergies"}
+            </Text>
           </View>
         </View>
 
@@ -164,7 +198,7 @@ export default function PatientDetailsScreen() {
           </View>
 
           <Text style={mainStyles.needsAttentionPatientSubText}>
-            Malaria - June 2026
+            {patient.relevantHistory || "Malaria - June 2026"}
           </Text>
         </View>
 
@@ -179,7 +213,13 @@ export default function PatientDetailsScreen() {
 
           <TouchableOpacity
             style={mainStyles.detailPrimaryButton}
-            onPress={() => router.push("/triage")}
+            onPress={() => {
+              setSelectedPatient(patient.id);
+              router.push({
+                pathname: "/triage",
+                params: { id: patient.id },
+              });
+            }}
           >
             <Text style={mainStyles.detailPrimaryButtonText}>Start Triage</Text>
             <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />

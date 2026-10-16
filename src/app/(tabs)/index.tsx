@@ -97,7 +97,7 @@ export default function NurseHomeScreen() {
               <View>
                 <Text style={mainStyles.metricCardLabel}>In Triage</Text>
                 <Text style={mainStyles.metricValueInTriage}>
-                  {patients.filter((p) => p.status === 'Active').length}
+                  {patients.filter((p) => p.status === 'Active' || p.status === 'Admission').length}
                 </Text>
               </View>
               <Ionicons name="pulse" size={20} color="#00796B" />
@@ -128,37 +128,43 @@ export default function NurseHomeScreen() {
         </View>
 
         {/* Dynamically Rendered Needs Attention Cards */}
-        {needsAttentionList.map((patient) => (
-          <View key={patient.id} style={mainStyles.needsAttentionCard}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View style={mainStyles.needsAttentionAvatarBox}>
-                  <Text style={mainStyles.needsAttentionAvatarText}>{patient.avatarText}</Text>
+        {needsAttentionList.map((rawPatient) => {
+          const patient: any = rawPatient;
+          return (
+            <View key={patient.id} style={mainStyles.needsAttentionCard}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={mainStyles.needsAttentionAvatarBox}>
+                    <Text style={mainStyles.needsAttentionAvatarText}>{patient.avatarText}</Text>
+                  </View>
+                  <View>
+                    <Text style={mainStyles.needsAttentionPatientName}>{patient.name}</Text>
+                    <Text style={mainStyles.needsAttentionPatientSubText}>
+                      {patient.id} • {patient.gender}
+                    </Text>
+                  </View>
                 </View>
-                <View>
-                  <Text style={mainStyles.needsAttentionPatientName}>{patient.name}</Text>
-                  <Text style={mainStyles.needsAttentionPatientSubText}>
-                    {patient.id} • {patient.gender}
-                  </Text>
+                <View style={{ backgroundColor: '#FFEBEE', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                  <Text style={{ color: '#D32F2F', fontSize: 10, fontWeight: 'bold' }}>High</Text>
                 </View>
               </View>
-              <View style={{ backgroundColor: '#FFEBEE', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                <Text style={{ color: '#D32F2F', fontSize: 10, fontWeight: 'bold' }}>High</Text>
-              </View>
+              <Text style={mainStyles.needsAttentionStatusText}>{patient.status}</Text>
+              
+              <TouchableOpacity 
+                style={mainStyles.needsAttentionContinueButton}
+                onPress={() => {
+                  setSelectedPatient(patient.id);
+                  router.push({
+                    pathname: '/triage',
+                    params: { id: patient.id },
+                  });
+                }}
+              >
+                <Text style={mainStyles.needsAttentionContinueButtonText}>Continue</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={mainStyles.needsAttentionStatusText}>{patient.status}</Text>
-            
-            <TouchableOpacity 
-              style={mainStyles.needsAttentionContinueButton}
-              onPress={() => {
-                setSelectedPatient(patient.id);
-                router.push('/full-patient-detail');
-              }}
-            >
-              <Text style={mainStyles.needsAttentionContinueButtonText}>Continue</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
+          );
+        })}
 
         {/* Upcoming Appointments Section Header */}
         <View style={mainStyles.sectionHeaderRow}>
@@ -173,31 +179,29 @@ export default function NurseHomeScreen() {
         </View>
 
         {/* Dynamically Rendered Upcoming Appointment Cards */}
-        {upcomingList.map((patient) => (
-          <View key={patient.id} style={mainStyles.upcomingAppointmentCard}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View style={mainStyles.needsAttentionAvatarBox}>
-                  <Text style={mainStyles.needsAttentionAvatarText}>{patient.avatarText}</Text>
+        {upcomingList.map((rawPatient) => {
+          const patient: any = rawPatient;
+          return (
+            <View key={patient.id} style={mainStyles.upcomingAppointmentCard}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={mainStyles.needsAttentionAvatarBox}>
+                    <Text style={mainStyles.needsAttentionAvatarText}>{patient.avatarText}</Text>
+                  </View>
+                  <View>
+                    <Text style={mainStyles.needsAttentionPatientName}>{patient.name}</Text>
+                    <Text style={mainStyles.needsAttentionPatientSubText}>
+                      {patient.id} • {patient.gender}
+                    </Text>
+                  </View>
                 </View>
-                <View>
-                  <Text style={mainStyles.needsAttentionPatientName}>{patient.name}</Text>
-                  <Text style={mainStyles.needsAttentionPatientSubText}>
-                    {patient.id} • {patient.gender}
-                  </Text>
-                </View>
+                <Text style={mainStyles.upcomingAppointmentTimeText}>
+                  {patient.appointmentTime || "09:00 AM"}
+                </Text>
               </View>
-              <TouchableOpacity
-                onPress={() => {
-                  setSelectedPatient(patient.id);
-                  router.push('/full-patient-detail');
-                }}
-              >
-                <Text style={mainStyles.upcomingAppointmentTimeText}>View →</Text>
-              </TouchableOpacity>
             </View>
-          </View>
-        ))}
+          );
+        })}
 
       </ScrollView>
     </SafeAreaView>
