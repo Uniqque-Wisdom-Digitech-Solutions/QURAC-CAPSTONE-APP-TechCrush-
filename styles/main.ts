@@ -4,7 +4,7 @@ export const mainStyles = StyleSheet.create({
   // Global Layout
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#fffffff',
   },
   container: {
     flex: 1,
@@ -570,15 +570,15 @@ export const mainStyles = StyleSheet.create({
 
   // Appointment Status Badges (Single Unified Declaration)
   badgeConfirmed: {
-    backgroundColor: '#E8F5E9',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   badgeConfirmedText: {
-    color: '#2E7D32',
-    fontSize: 10,
-    fontWeight: 'bold',
+    color: '#15803D',
+    fontSize: 12,
+    fontWeight: '600',
   },
   badgePending: {
     backgroundColor: '#FFF3E0',

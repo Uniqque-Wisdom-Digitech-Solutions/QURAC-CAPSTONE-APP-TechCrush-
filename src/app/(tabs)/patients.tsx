@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router'; // 1. Import router
 import { mainStyles } from '../../../styles/main';
 
 export default function PatientsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter(); // 2. Initialize router
 
   return (
     <SafeAreaView style={mainStyles.safeArea}>
@@ -126,7 +128,11 @@ export default function PatientsScreen() {
               </View>
             </View>
 
-            <TouchableOpacity style={mainStyles.compactOutlineButton}>
+            {/* 3. Added onPress router handler */}
+            <TouchableOpacity 
+              style={mainStyles.compactOutlineButton}
+              onPress={() => router.push('/full-patient-detail')}
+            >
               <Text style={mainStyles.compactOutlineButtonText}>View</Text>
             </TouchableOpacity>
           </View>
@@ -151,7 +157,10 @@ export default function PatientsScreen() {
               </View>
             </View>
 
-            <TouchableOpacity style={mainStyles.compactOutlineButton}>
+            <TouchableOpacity 
+              style={mainStyles.compactOutlineButton}
+              onPress={() => router.push('/full-patient-detail')}
+            >
               <Text style={mainStyles.compactOutlineButtonText}>View</Text>
             </TouchableOpacity>
           </View>
@@ -179,7 +188,10 @@ export default function PatientsScreen() {
               </View>
             </View>
 
-            <TouchableOpacity style={mainStyles.compactOutlineButton}>
+            <TouchableOpacity 
+              style={mainStyles.compactOutlineButton}
+              onPress={() => router.push('/full-patient-detail')}
+            >
               <Text style={mainStyles.compactOutlineButtonText}>View</Text>
             </TouchableOpacity>
           </View>
@@ -204,7 +216,10 @@ export default function PatientsScreen() {
               </View>
             </View>
 
-            <TouchableOpacity style={mainStyles.compactOutlineButton}>
+            <TouchableOpacity 
+              style={mainStyles.compactOutlineButton}
+              onPress={() => router.push('/full-patient-detail')}
+            >
               <Text style={mainStyles.compactOutlineButtonText}>View</Text>
             </TouchableOpacity>
           </View>

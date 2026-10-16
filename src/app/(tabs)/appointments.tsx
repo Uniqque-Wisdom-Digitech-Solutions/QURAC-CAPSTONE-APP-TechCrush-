@@ -134,7 +134,7 @@ export default function AppointmentsScreen() {
 
             <TouchableOpacity 
               style={mainStyles.compactOutlineButton}
-              onPress={() => router.push('/appointment-details' as any)}
+              onPress={() => router.push('/appointment-details')}
             >
               <Text style={mainStyles.compactOutlineButtonText}>View</Text>
             </TouchableOpacity>
@@ -162,7 +162,7 @@ export default function AppointmentsScreen() {
 
             <TouchableOpacity 
               style={mainStyles.compactOutlineButton}
-              onPress={() => router.push('/appointment-details' as any)}
+              onPress={() => router.push('/appointment-details')}
             >
               <Text style={mainStyles.compactOutlineButtonText}>View</Text>
             </TouchableOpacity>
@@ -190,7 +190,7 @@ export default function AppointmentsScreen() {
 
             <TouchableOpacity 
               style={mainStyles.compactOutlineButton}
-              onPress={() => router.push('/appointment-details' as any)}
+              onPress={() => router.push('/appointment-details')}
             >
               <Text style={mainStyles.compactOutlineButtonText}>View</Text>
             </TouchableOpacity>
@@ -218,7 +218,7 @@ export default function AppointmentsScreen() {
 
             <TouchableOpacity 
               style={mainStyles.compactOutlineButton}
-              onPress={() => router.push('/appointment-details' as any)}
+              onPress={() => router.push('/appointment-details')}
             >
               <Text style={mainStyles.compactOutlineButtonText}>View</Text>
             </TouchableOpacity>

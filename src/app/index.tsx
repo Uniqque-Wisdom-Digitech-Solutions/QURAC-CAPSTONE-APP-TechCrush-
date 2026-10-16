@@ -12,11 +12,11 @@ export default function AuthScreen() {
   const [fullName, setFullName] = useState('');
 
   const handleAuth = () => {
-    router.replace('/(app)');
+    router.replace('/(tabs)');
   };
 
   const handleGoogleSignIn = () => {
-    router.replace('/(app)');
+    router.replace('/(tabs)');
   };
 
   return (
