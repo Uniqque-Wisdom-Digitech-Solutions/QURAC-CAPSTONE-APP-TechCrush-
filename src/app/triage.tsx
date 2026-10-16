@@ -1,11 +1,28 @@
+import React from 'react';
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { mainStyles } from "../../styles/main";
 
+// Zustand store import
+import { useAppStore } from "../store/useAppStore";
+
 export default function TriageScreen() {
   const router = useRouter();
+
+  // Pull selected patient ID and patients list from Zustand
+  const patients = useAppStore((state) => state.patients);
+  const selectedPatientId = useAppStore((state) => state.selectedPatientId);
+
+  // Find the selected patient data or fallback to the first patient
+  const patient = patients.find((p) => p.id === selectedPatientId) || patients[0] || {
+    id: 'P-00123',
+    name: 'Sarah Ahmed',
+    gender: 'Female',
+    avatarText: 'SA',
+    status: 'Needs Attention',
+  };
 
   return (
     <SafeAreaView style={mainStyles.safeArea}>
@@ -78,15 +95,15 @@ export default function TriageScreen() {
               <Text
                 style={[mainStyles.needsAttentionAvatarText, { fontSize: 14 }]}
               >
-                SA
+                {patient.avatarText || 'SA'}
               </Text>
             </View>
             <View style={mainStyles.patientCardDetails}>
               <Text style={mainStyles.needsAttentionPatientName}>
-                Sarah Ahmed
+                {patient.name}
               </Text>
               <Text style={mainStyles.needsAttentionPatientSubText}>
-                Patient ID: P-00123
+                Patient ID: {patient.id}
               </Text>
               <Text
                 style={[
@@ -114,22 +131,22 @@ export default function TriageScreen() {
           <View style={mainStyles.triageVitalsGridRow}>
             <View style={mainStyles.triageVitalCard}>
               <Text style={mainStyles.detailDataLabel}>BP</Text>
-              <Text style={mainStyles.triageVitalValue}>128/84 mmHg</Text>
+              <Text style={mainStyles.triageVitalValue}>{patient.bloodPressure || 'Not recorded'}</Text>
             </View>
             <View style={mainStyles.triageVitalCard}>
               <Text style={mainStyles.detailDataLabel}>Pulse</Text>
-              <Text style={mainStyles.triageVitalValue}>88 bpm</Text>
+              <Text style={mainStyles.triageVitalValue}>{patient.pulseRate || 'Not recorded'}</Text>
             </View>
           </View>
 
           <View style={mainStyles.triageVitalsGridRow}>
             <View style={mainStyles.triageVitalCard}>
               <Text style={mainStyles.detailDataLabel}>Temperature</Text>
-              <Text style={mainStyles.triageVitalValue}>37.8 °C</Text>
+              <Text style={mainStyles.triageVitalValue}>{patient.temperature || 'Not recorded'}</Text>
             </View>
             <View style={mainStyles.triageVitalCard}>
               <Text style={mainStyles.detailDataLabel}>Respiratory Rate</Text>
-              <Text style={mainStyles.triageVitalValue}>20 /min</Text>
+              <Text style={mainStyles.triageVitalValue}>{patient.respiratoryRate || 'Not recorded'}</Text>
             </View>
           </View>
         </View>

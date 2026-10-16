@@ -5,8 +5,21 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { mainStyles } from '../../styles/main';
 
-export default function FullPatientDetailsScreen() {
+// Zustand Store Import for Dynamic Patient Access
+import { useAppStore } from '../store/useAppStore';
+
+export default function FullPatientDetailScreen() {
   const router = useRouter();
+
+  // 1. Retrieve selected patient ID and full list from Zustand global store
+  const selectedPatientId = useAppStore((state) => state.selectedPatientId);
+  const patients = useAppStore((state) => state.patients);
+
+  // 2. Locate target patient or fallback cleanly to first record
+  const patient = patients.find((p) => p.id === selectedPatientId) || patients[0];
+
+  // Dynamic email generator helper based on selected patient name
+  const patientEmail = `${patient.name.toLowerCase().replace(/\s+/g, '.')}@example.com`;
 
   return (
     <SafeAreaView style={mainStyles.safeArea}>
@@ -36,7 +49,7 @@ export default function FullPatientDetailsScreen() {
           </View>
         </View>
 
-        {/* Back Link & Title */}
+        {/* Navigation Back Link & Screen Title */}
         <TouchableOpacity 
           style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}
           onPress={() => router.back()}
@@ -48,29 +61,29 @@ export default function FullPatientDetailsScreen() {
         <Text style={mainStyles.greetingTitle}>Patient Medical File</Text>
         <Text style={mainStyles.greetingSubtitle}>Complete clinical history and records.</Text>
 
-        {/* Patient Profile Header Card */}
+        {/* Dynamic Patient Profile Header Card */}
         <View style={[mainStyles.patientCardContainer, { marginTop: 8 }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <View style={[mainStyles.needsAttentionAvatarBox, { backgroundColor: '#E0F2F1', width: 48, height: 48, borderRadius: 24 }]}>
-                <Text style={[mainStyles.needsAttentionAvatarText, { fontSize: 16 }]}>SA</Text>
+                <Text style={[mainStyles.needsAttentionAvatarText, { fontSize: 16 }]}>{patient.avatarText}</Text>
               </View>
               <View style={{ marginLeft: 12 }}>
-                <Text style={mainStyles.needsAttentionPatientName}>Sarah Ahmed</Text>
-                <Text style={mainStyles.needsAttentionPatientSubText}>Patient ID: P-00123</Text>
-                <Text style={[mainStyles.needsAttentionPatientSubText, { marginTop: 2 }]}>38 years • Female</Text>
+                <Text style={mainStyles.needsAttentionPatientName}>{patient.name}</Text>
+                <Text style={mainStyles.needsAttentionPatientSubText}>Patient ID: {patient.id}</Text>
+                <Text style={[mainStyles.needsAttentionPatientSubText, { marginTop: 2 }]}>{patient.gender}</Text>
               </View>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
               <View style={[mainStyles.badgeActiveVisit, { marginBottom: 4 }]}>
-                <Text style={mainStyles.badgeActiveVisitText}>Active Visit</Text>
+                <Text style={mainStyles.badgeActiveVisitText}>{patient.status}</Text>
               </View>
               <Text style={{ fontSize: 11, color: '#666666' }}>General Consultation</Text>
             </View>
           </View>
         </View>
 
-        {/* Section: Patient Information */}
+        {/* Section 1: Dynamic Patient Information */}
         <View style={{ marginTop: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center' }}>
           <Ionicons name="person-outline" size={16} color="#2F9094" style={{ marginRight: 6 }} />
           <Text style={{ fontSize: 15, fontWeight: '700', color: '#063154' }}>Patient Information</Text>
@@ -80,11 +93,11 @@ export default function FullPatientDetailsScreen() {
           <View style={{ paddingVertical: 4 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' }}>
               <Text style={{ color: '#666666', fontSize: 13 }}>Full name</Text>
-              <Text style={{ color: '#063154', fontSize: 13, fontWeight: '600' }}>Sarah Ahmed</Text>
+              <Text style={{ color: '#063154', fontSize: 13, fontWeight: '600' }}>{patient.name}</Text>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' }}>
               <Text style={{ color: '#666666', fontSize: 13 }}>Patient ID</Text>
-              <Text style={{ color: '#063154', fontSize: 13, fontWeight: '600' }}>P-00123</Text>
+              <Text style={{ color: '#063154', fontSize: 13, fontWeight: '600' }}>{patient.id}</Text>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' }}>
               <Text style={{ color: '#666666', fontSize: 13 }}>Date of birth</Text>
@@ -92,7 +105,7 @@ export default function FullPatientDetailsScreen() {
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' }}>
               <Text style={{ color: '#666666', fontSize: 13 }}>Gender</Text>
-              <Text style={{ color: '#063154', fontSize: 13, fontWeight: '600' }}>Female</Text>
+              <Text style={{ color: '#063154', fontSize: 13, fontWeight: '600' }}>{patient.gender}</Text>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' }}>
               <Text style={{ color: '#666666', fontSize: 13 }}>Phone number</Text>
@@ -100,12 +113,12 @@ export default function FullPatientDetailsScreen() {
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 }}>
               <Text style={{ color: '#666666', fontSize: 13 }}>Email</Text>
-              <Text style={{ color: '#063154', fontSize: 13, fontWeight: '600' }}>Sarah.ahmed@example.com</Text>
+              <Text style={{ color: '#063154', fontSize: 13, fontWeight: '600' }}>{patientEmail}</Text>
             </View>
           </View>
         </View>
 
-        {/* Section: Recent Vitals */}
+        {/* Section 2: Recent Vitals */}
         <View style={{ marginTop: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center' }}>
           <Ionicons name="pulse-outline" size={16} color="#2F9094" style={{ marginRight: 6 }} />
           <Text style={{ fontSize: 15, fontWeight: '700', color: '#063154' }}>Recent Vitals</Text>
@@ -133,7 +146,7 @@ export default function FullPatientDetailsScreen() {
           </View>
         </View>
 
-        {/* Section: Active Conditions */}
+        {/* Section 3: Active Conditions */}
         <View style={{ marginTop: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center' }}>
           <MaterialCommunityIcons name="medical-bag" size={16} color="#2F9094" style={{ marginRight: 6 }} />
           <Text style={{ fontSize: 15, fontWeight: '700', color: '#063154' }}>Active Conditions</Text>
@@ -150,7 +163,7 @@ export default function FullPatientDetailsScreen() {
           </View>
         </View>
 
-        {/* Section: Allergies */}
+        {/* Section 4: Allergies */}
         <View style={{ marginTop: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center' }}>
           <Ionicons name="alert-circle-outline" size={16} color="#2F9094" style={{ marginRight: 6 }} />
           <Text style={{ fontSize: 15, fontWeight: '700', color: '#063154' }}>Allergies</Text>
@@ -160,7 +173,7 @@ export default function FullPatientDetailsScreen() {
           <Text style={{ color: '#666666', fontSize: 13 }}>No known allergies</Text>
         </View>
 
-        {/* Section: Current Visit */}
+        {/* Section 5: Current Visit */}
         <View style={{ marginTop: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center' }}>
           <Ionicons name="calendar-outline" size={16} color="#2F9094" style={{ marginRight: 6 }} />
           <Text style={{ fontSize: 15, fontWeight: '700', color: '#063154' }}>Current Visit</Text>
@@ -180,7 +193,7 @@ export default function FullPatientDetailsScreen() {
                 </View>
                 <View>
                   <Text style={{ fontSize: 11, color: '#666666' }}>Reason for Visit</Text>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#063154' }}>Headache and fever for 2 days</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#063154' }}>Headache and fever</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#F0F0F0', alignItems: 'center' }}>
@@ -189,14 +202,14 @@ export default function FullPatientDetailsScreen() {
                   <Text style={{ fontSize: 12, fontWeight: '600', color: '#063154' }}>Dr. John Uzor</Text>
                 </View>
                 <View style={mainStyles.badgeCheckedIn}>
-                  <Text style={{ fontSize: 11, fontWeight: '600', color: '#00796B' }}>Checked in</Text>
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: '#00796B' }}>{patient.status}</Text>
                 </View>
               </View>
             </View>
           </View>
         </View>
 
-        {/* Section: Past Visits History */}
+        {/* Section 6: Past Visits History */}
         <View style={{ marginTop: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center' }}>
           <Ionicons name="time-outline" size={16} color="#2F9094" style={{ marginRight: 6 }} />
           <Text style={{ fontSize: 15, fontWeight: '700', color: '#063154' }}>Past Visits History</Text>

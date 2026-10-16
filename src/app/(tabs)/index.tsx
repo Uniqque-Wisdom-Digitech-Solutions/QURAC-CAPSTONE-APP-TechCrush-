@@ -2,14 +2,30 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { mainStyles } from '../../../styles/main';
 
+// Zustand store import
+import { useAppStore } from '../../store/useAppStore';
+
 export default function NurseHomeScreen() {
+  const router = useRouter();
+
+  // Pull live patients data and actions directly from Zustand
+  const patients = useAppStore((state) => state.patients);
+  const setSelectedPatient = useAppStore((state) => state.setSelectedPatient);
+
+  // Filter 1: "Needs Attention" card section shows strictly 'Needs Attention'
+  const needsAttentionList = patients.filter((p) => p.status === 'Needs Attention');
+
+  // Filter 2: "Upcoming Appointments" card section shows strictly 'Upcoming'
+  const upcomingList = patients.filter((p) => p.status === 'Upcoming');
+
   return (
     <SafeAreaView style={mainStyles.safeArea}>
-      <ScrollView style={mainStyles.container}>
+      <ScrollView style={mainStyles.container} contentContainerStyle={{ paddingBottom: 40 }}>
         
-        {/* Top Brand Header with Custom CorelDraw Logo */}
+        {/* Top Brand Header */}
         <View style={mainStyles.brandHeaderRow}>
           <View>
             <Image 
@@ -38,8 +54,10 @@ export default function NurseHomeScreen() {
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View>
               <Text style={mainStyles.appointmentsBannerTitle}>Appointments</Text>
-              <Text style={mainStyles.appointmentsBannerCount}>12</Text>
-              <Text style={mainStyles.appointmentsBannerActionText}>View patients expected today →</Text>
+              <Text style={mainStyles.appointmentsBannerCount}>{patients.length}</Text>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/patients')}>
+                <Text style={mainStyles.appointmentsBannerActionText}>View patients expected today →</Text>
+              </TouchableOpacity>
             </View>
             <Ionicons name="calendar" size={32} color="#00796B" />
           </View>
@@ -51,7 +69,9 @@ export default function NurseHomeScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <View>
                 <Text style={mainStyles.metricCardLabel}>Patient Waiting</Text>
-                <Text style={mainStyles.metricValueWaiting}>5</Text>
+                <Text style={mainStyles.metricValueWaiting}>
+                  {patients.filter((p) => p.status === 'Needs Attention').length}
+                </Text>
               </View>
               <MaterialCommunityIcons name="account-group" size={20} color="#063154" />
             </View>
@@ -61,7 +81,9 @@ export default function NurseHomeScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <View>
                 <Text style={mainStyles.metricCardLabel}>Awaiting Triage</Text>
-                <Text style={mainStyles.metricValueAwaitingTriage}>3</Text>
+                <Text style={mainStyles.metricValueAwaitingTriage}>
+                  {upcomingList.length}
+                </Text>
               </View>
               <Ionicons name="time-outline" size={20} color="#D32F2F" />
             </View>
@@ -74,7 +96,9 @@ export default function NurseHomeScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <View>
                 <Text style={mainStyles.metricCardLabel}>In Triage</Text>
-                <Text style={mainStyles.metricValueInTriage}>2</Text>
+                <Text style={mainStyles.metricValueInTriage}>
+                  {patients.filter((p) => p.status === 'Active').length}
+                </Text>
               </View>
               <Ionicons name="pulse" size={20} color="#00796B" />
             </View>
@@ -94,98 +118,86 @@ export default function NurseHomeScreen() {
         {/* Needs Attention Section Header */}
         <View style={mainStyles.sectionHeaderRow}>
           <Text style={mainStyles.sectionTitleText}>Needs attention</Text>
-          <TouchableOpacity style={mainStyles.sectionActionLinkContainer}>
+          <TouchableOpacity 
+            style={mainStyles.sectionActionLinkContainer}
+            onPress={() => router.push('/(tabs)/queue')}
+          >
             <Text style={mainStyles.sectionActionLinkText}>View queue</Text>
             <Ionicons name="arrow-forward" size={14} color="#2F9094" />
           </TouchableOpacity>
         </View>
 
-        {/* Needs Attention Card 1: Chinedu Okafor */}
-        <View style={mainStyles.needsAttentionCard}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View style={mainStyles.needsAttentionAvatarBox}>
-                <Text style={mainStyles.needsAttentionAvatarText}>CO</Text>
+        {/* Dynamically Rendered Needs Attention Cards */}
+        {needsAttentionList.map((patient) => (
+          <View key={patient.id} style={mainStyles.needsAttentionCard}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={mainStyles.needsAttentionAvatarBox}>
+                  <Text style={mainStyles.needsAttentionAvatarText}>{patient.avatarText}</Text>
+                </View>
+                <View>
+                  <Text style={mainStyles.needsAttentionPatientName}>{patient.name}</Text>
+                  <Text style={mainStyles.needsAttentionPatientSubText}>
+                    {patient.id} • {patient.gender}
+                  </Text>
+                </View>
               </View>
-              <View>
-                <Text style={mainStyles.needsAttentionPatientName}>Chinedu Okafor</Text>
-                <Text style={mainStyles.needsAttentionPatientSubText}>P-00124 • 18 min waiting</Text>
+              <View style={{ backgroundColor: '#FFEBEE', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                <Text style={{ color: '#D32F2F', fontSize: 10, fontWeight: 'bold' }}>High</Text>
               </View>
             </View>
-            <View style={{ backgroundColor: '#FFEBEE', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-              <Text style={{ color: '#D32F2F', fontSize: 10, fontWeight: 'bold' }}>High</Text>
-            </View>
+            <Text style={mainStyles.needsAttentionStatusText}>{patient.status}</Text>
+            
+            <TouchableOpacity 
+              style={mainStyles.needsAttentionContinueButton}
+              onPress={() => {
+                setSelectedPatient(patient.id);
+                router.push('/full-patient-detail');
+              }}
+            >
+              <Text style={mainStyles.needsAttentionContinueButtonText}>Continue</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={mainStyles.needsAttentionStatusText}>In Triage</Text>
-          
-          <TouchableOpacity style={mainStyles.needsAttentionContinueButton}>
-            <Text style={mainStyles.needsAttentionContinueButtonText}>Continue</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Needs Attention Card 2: Aisha Ibrahim */}
-        <View style={mainStyles.needsAttentionCard}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View style={[mainStyles.needsAttentionAvatarBox, { backgroundColor: '#F0F0F0' }]}>
-                <Text style={{ color: '#666', fontWeight: 'bold', fontSize: 12 }}>AI</Text>
-              </View>
-              <View>
-                <Text style={mainStyles.needsAttentionPatientName}>Aisha Ibrahim</Text>
-                <Text style={mainStyles.needsAttentionPatientSubText}>P-00345 • 22 min waiting</Text>
-              </View>
-            </View>
-            <View style={{ backgroundColor: '#F0F0F0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-              <Text style={{ color: '#666', fontSize: 10, fontWeight: 'bold' }}>Normal</Text>
-            </View>
-          </View>
-          <Text style={[mainStyles.needsAttentionStatusText, { color: '#666' }]}>Awaiting triage</Text>
-          
-          <TouchableOpacity style={mainStyles.needsAttentionViewButton}>
-            <Text style={mainStyles.needsAttentionViewButtonText}>View</Text>
-          </TouchableOpacity>
-        </View>
+        ))}
 
         {/* Upcoming Appointments Section Header */}
         <View style={mainStyles.sectionHeaderRow}>
           <Text style={mainStyles.sectionTitleText}>Upcoming appointments</Text>
-          <TouchableOpacity style={mainStyles.sectionActionLinkContainer}>
+          <TouchableOpacity 
+            style={mainStyles.sectionActionLinkContainer}
+            onPress={() => router.push('/(tabs)/patients')}
+          >
             <Text style={mainStyles.sectionActionLinkText}>View all</Text>
             <Ionicons name="arrow-forward" size={14} color="#2F9094" />
           </TouchableOpacity>
         </View>
 
-        {/* Upcoming Appointment 1: Sarah Ahmed */}
-        <View style={mainStyles.upcomingAppointmentCard}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View style={mainStyles.needsAttentionAvatarBox}>
-                <Text style={mainStyles.needsAttentionAvatarText}>SA</Text>
+        {/* Dynamically Rendered Upcoming Appointment Cards */}
+        {upcomingList.map((patient) => (
+          <View key={patient.id} style={mainStyles.upcomingAppointmentCard}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={mainStyles.needsAttentionAvatarBox}>
+                  <Text style={mainStyles.needsAttentionAvatarText}>{patient.avatarText}</Text>
+                </View>
+                <View>
+                  <Text style={mainStyles.needsAttentionPatientName}>{patient.name}</Text>
+                  <Text style={mainStyles.needsAttentionPatientSubText}>
+                    {patient.id} • {patient.gender}
+                  </Text>
+                </View>
               </View>
-              <View>
-                <Text style={mainStyles.needsAttentionPatientName}>Sarah Ahmed</Text>
-                <Text style={mainStyles.needsAttentionPatientSubText}>General Consultation • Checked In</Text>
-              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedPatient(patient.id);
+                  router.push('/full-patient-detail');
+                }}
+              >
+                <Text style={mainStyles.upcomingAppointmentTimeText}>View →</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={mainStyles.upcomingAppointmentTimeText}>09:00 AM</Text>
           </View>
-        </View>
-
-        {/* Upcoming Appointment 2: Musa Ibrahim */}
-        <View style={mainStyles.upcomingAppointmentCard}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View style={mainStyles.needsAttentionAvatarBox}>
-                <Text style={mainStyles.needsAttentionAvatarText}>MI</Text>
-              </View>
-              <View>
-                <Text style={mainStyles.needsAttentionPatientName}>Musa Ibrahim</Text>
-                <Text style={mainStyles.needsAttentionPatientSubText}>Follow Up • Pending</Text>
-              </View>
-            </View>
-            <Text style={mainStyles.upcomingAppointmentTimeText}>10:00 AM</Text>
-          </View>
-        </View>
+        ))}
 
       </ScrollView>
     </SafeAreaView>

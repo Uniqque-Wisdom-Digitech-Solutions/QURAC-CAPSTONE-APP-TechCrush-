@@ -1,15 +1,32 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { mainStyles } from "../../styles/main";
+import React from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { mainStyles } from '../../styles/main';
+
+// Zustand store import
+import { useAppStore } from '../store/useAppStore';
 
 export default function AppointmentDetailsScreen() {
   const router = useRouter();
 
+  // Pull selected patient ID and patients list from Zustand
+  const patients = useAppStore((state) => state.patients);
+  const selectedPatientId = useAppStore((state) => state.selectedPatientId);
+
+  // Find the selected patient data or fallback to the first patient / default
+  const patient = patients.find((p) => p.id === selectedPatientId) || patients[0] || {
+    id: 'P-00123',
+    name: 'Sarah Ahmed',
+    gender: 'Female',
+    avatarText: 'SA',
+    status: 'Upcoming',
+  };
+
   return (
     <SafeAreaView style={mainStyles.safeArea}>
-      <ScrollView style={mainStyles.container}>
+      <ScrollView style={mainStyles.container} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Top Brand Header */}
         <View style={mainStyles.brandHeaderRow}>
           <View>
@@ -75,18 +92,18 @@ export default function AppointmentDetailsScreen() {
               <Text
                 style={[mainStyles.needsAttentionAvatarText, { fontSize: 14 }]}
               >
-                SA
+                {patient.avatarText || 'SA'}
               </Text>
             </View>
             <View style={mainStyles.patientCardDetails}>
               <Text style={mainStyles.needsAttentionPatientName}>
-                Sarah Ahmed
+                {patient.name}
               </Text>
               <Text style={mainStyles.needsAttentionPatientSubText}>
-                Patient ID: P-00123
+                Patient ID: {patient.id}
               </Text>
               <Text style={mainStyles.needsAttentionPatientSubText}>
-                38 years • Female
+                34 years • {patient.gender}
               </Text>
             </View>
           </View>
@@ -150,12 +167,12 @@ export default function AppointmentDetailsScreen() {
 
           <View style={mainStyles.detailDataRow}>
             <Text style={mainStyles.detailDataLabel}>Full name</Text>
-            <Text style={mainStyles.detailDataValue}>Sarah Ahmed</Text>
+            <Text style={mainStyles.detailDataValue}>{patient.name}</Text>
           </View>
 
           <View style={mainStyles.detailDataRow}>
             <Text style={mainStyles.detailDataLabel}>Patient ID</Text>
-            <Text style={mainStyles.detailDataValue}>P-00123</Text>
+            <Text style={mainStyles.detailDataValue}>{patient.id}</Text>
           </View>
 
           <View style={mainStyles.detailDataRow}>
@@ -165,7 +182,7 @@ export default function AppointmentDetailsScreen() {
 
           <View style={mainStyles.detailDataRow}>
             <Text style={mainStyles.detailDataLabel}>Gender</Text>
-            <Text style={mainStyles.detailDataValue}>Female</Text>
+            <Text style={mainStyles.detailDataValue}>{patient.gender}</Text>
           </View>
 
           <View style={mainStyles.detailDataRow}>
@@ -175,7 +192,7 @@ export default function AppointmentDetailsScreen() {
 
           <View style={mainStyles.detailDataRow}>
             <Text style={mainStyles.detailDataLabel}>Email</Text>
-            <Text style={mainStyles.detailDataValue}>Sarah.ahmed@example.com</Text>
+            <Text style={mainStyles.detailDataValue}>{patient.name.toLowerCase().replace(/\s+/g, '')}@example.com</Text>
           </View>
         </View>
 

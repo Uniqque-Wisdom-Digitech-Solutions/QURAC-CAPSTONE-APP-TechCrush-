@@ -5,13 +5,27 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { mainStyles } from '../../../styles/main';
 
+// Zustand store import
+import { useAppStore } from '../../store/useAppStore';
+
 export default function AppointmentsScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Pull live patients data and actions directly from Zustand
+  const patients = useAppStore((state) => state.patients);
+  const setSelectedPatient = useAppStore((state) => state.setSelectedPatient);
+
+  // Filter appointments list dynamically based on search input
+  const filteredAppointments = patients.filter(
+    (patient) =>
+      patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      patient.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <SafeAreaView style={mainStyles.safeArea}>
-      <ScrollView style={mainStyles.container}>
+      <ScrollView style={mainStyles.container} contentContainerStyle={{ paddingBottom: 100 }}>
         
         {/* Top Brand Header */}
         <View style={mainStyles.brandHeaderRow}>
@@ -37,16 +51,16 @@ export default function AppointmentsScreen() {
         <Text style={mainStyles.greetingTitle}>Appointments</Text>
         <Text style={mainStyles.greetingSubtitle}>View today's and upcoming patient appointments.</Text>
 
-        {/* Top Total Appointments Banner */}
+        {/* Top Total Appointments Banner (Dynamic from Zustand) */}
         <View style={mainStyles.appointmentsBannerCardSolid}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <MaterialCommunityIcons name="calendar-clock" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
             <Text style={mainStyles.appointmentsBannerTitleSolid}>Appointments</Text>
           </View>
-          <Text style={mainStyles.appointmentsBannerCountSolid}>12</Text>
+          <Text style={mainStyles.appointmentsBannerCountSolid}>{patients.length}</Text>
         </View>
 
-        {/* 2x2 Metric Cards Grid */}
+        {/* 2x2 Metric Cards Grid (Dynamic counts based on live status) */}
         <View style={mainStyles.queueGridContainer}>
           <View style={mainStyles.queueGridRow}>
             
@@ -55,7 +69,9 @@ export default function AppointmentsScreen() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <View>
                   <Text style={mainStyles.metricCardLabel}>Confirmed</Text>
-                  <Text style={[mainStyles.queueMetricValue, { color: '#063154' }]}>5</Text>
+                  <Text style={[mainStyles.queueMetricValue, { color: '#063154' }]}>
+                    {patients.filter((p) => p.status === 'Needs Attention' || p.status === 'Active').length}
+                  </Text>
                 </View>
                 <MaterialCommunityIcons name="account-group-outline" size={20} color="#2F9094" />
               </View>
@@ -66,7 +82,9 @@ export default function AppointmentsScreen() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <View>
                   <Text style={mainStyles.metricCardLabel}>Checked In</Text>
-                  <Text style={[mainStyles.queueMetricValue, { color: '#063154' }]}>3</Text>
+                  <Text style={[mainStyles.queueMetricValue, { color: '#063154' }]}>
+                    {patients.filter((p) => p.status === 'Active').length}
+                  </Text>
                 </View>
                 <Ionicons name="time-outline" size={20} color="#2F9094" />
               </View>
@@ -76,12 +94,14 @@ export default function AppointmentsScreen() {
 
           <View style={mainStyles.queueGridRow}>
             
-            {/* Card 3: Pending */}
+            {/* Card 3: Pending / Upcoming */}
             <View style={mainStyles.queueGridCard}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <View>
                   <Text style={mainStyles.metricCardLabel}>Pending</Text>
-                  <Text style={[mainStyles.queueMetricValue, { color: '#063154' }]}>2</Text>
+                  <Text style={[mainStyles.queueMetricValue, { color: '#063154' }]}>
+                    {patients.filter((p) => p.status === 'Upcoming').length}
+                  </Text>
                 </View>
                 <Ionicons name="pulse-outline" size={20} color="#2F9094" />
               </View>
@@ -92,7 +112,7 @@ export default function AppointmentsScreen() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <View>
                   <Text style={mainStyles.metricCardLabel}>Cancelled</Text>
-                  <Text style={[mainStyles.queueMetricValue, { color: '#063154' }]}>1</Text>
+                  <Text style={[mainStyles.queueMetricValue, { color: '#063154' }]}>0</Text>
                 </View>
                 <Ionicons name="time-outline" size={20} color="#2F9094" />
               </View>
@@ -113,117 +133,58 @@ export default function AppointmentsScreen() {
           />
         </View>
 
-        {/* Appointment 1: Sarah Ahmed */}
-        <View style={mainStyles.patientCardContainer}>
-          <View style={mainStyles.patientCardHeaderRow}>
-            <View style={mainStyles.patientCardLeftSection}>
-              <View style={[mainStyles.needsAttentionAvatarBox, { backgroundColor: '#E0F2F1' }]}>
-                <Text style={mainStyles.needsAttentionAvatarText}>SA</Text>
-              </View>
-              <View style={mainStyles.patientCardDetails}>
-                <Text style={mainStyles.needsAttentionPatientName}>Sarah Ahmed</Text>
-                <Text style={mainStyles.needsAttentionPatientSubText}>P-00124 • 09:00 AM</Text>
-                
-                <View style={mainStyles.patientCardBadgeRow}>
-                  <View style={mainStyles.badgeConfirmed}>
-                    <Text style={mainStyles.badgeConfirmedText}>Confirmed</Text>
+        {/* Dynamically Rendered Appointment Cards */}
+        {filteredAppointments.map((patient, index) => {
+          // Dynamic appointment badge mappings using safe fallback styles
+          let badgeText = 'Confirmed';
+          let badgeStyle = mainStyles.badgeConfirmed;
+          let badgeTextStyle = mainStyles.badgeConfirmedText;
+
+          if (patient.status === 'Upcoming') {
+            badgeText = 'Pending';
+          } else if (patient.status === 'Active') {
+            badgeText = 'Checked In';
+          }
+
+          // Mock slot time generation for presentation display
+          const times = ['09:00 AM', '10:00 AM', '10:30 AM', '11:45 AM', '01:15 PM', '02:30 PM'];
+          const appointmentTime = times[index % times.length];
+
+          return (
+            <View key={patient.id} style={mainStyles.patientCardContainer}>
+              <View style={mainStyles.patientCardHeaderRow}>
+                <View style={mainStyles.patientCardLeftSection}>
+                  <View style={[mainStyles.needsAttentionAvatarBox, { backgroundColor: '#E0F2F1' }]}>
+                    <Text style={mainStyles.needsAttentionAvatarText}>{patient.avatarText}</Text>
+                  </View>
+                  <View style={mainStyles.patientCardDetails}>
+                    <Text style={mainStyles.needsAttentionPatientName}>{patient.name}</Text>
+                    <Text style={mainStyles.needsAttentionPatientSubText}>
+                      {patient.id} • {appointmentTime}
+                    </Text>
+                    
+                    <View style={mainStyles.patientCardBadgeRow}>
+                      <View style={badgeStyle}>
+                        <Text style={badgeTextStyle}>{badgeText}</Text>
+                      </View>
+                    </View>
                   </View>
                 </View>
+
+                {/* Now routes correctly to appointment details review screen */}
+                <TouchableOpacity 
+                  style={mainStyles.compactOutlineButton}
+                  onPress={() => {
+                    setSelectedPatient(patient.id);
+                    router.push('/appointment-details');
+                  }}
+                >
+                  <Text style={mainStyles.compactOutlineButtonText}>View</Text>
+                </TouchableOpacity>
               </View>
             </View>
-
-            <TouchableOpacity 
-              style={mainStyles.compactOutlineButton}
-              onPress={() => router.push('/appointment-details')}
-            >
-              <Text style={mainStyles.compactOutlineButtonText}>View</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Appointment 2: Grace Moses */}
-        <View style={mainStyles.patientCardContainer}>
-          <View style={mainStyles.patientCardHeaderRow}>
-            <View style={mainStyles.patientCardLeftSection}>
-              <View style={[mainStyles.needsAttentionAvatarBox, { backgroundColor: '#E0F2F1' }]}>
-                <Text style={mainStyles.needsAttentionAvatarText}>GM</Text>
-              </View>
-              <View style={mainStyles.patientCardDetails}>
-                <Text style={mainStyles.needsAttentionPatientName}>Grace Moses</Text>
-                <Text style={mainStyles.needsAttentionPatientSubText}>P-00852 • 10:00 AM</Text>
-                
-                <View style={mainStyles.patientCardBadgeRow}>
-                  <View style={mainStyles.badgePending}>
-                    <Text style={mainStyles.badgePendingText}>Pending</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              style={mainStyles.compactOutlineButton}
-              onPress={() => router.push('/appointment-details')}
-            >
-              <Text style={mainStyles.compactOutlineButtonText}>View</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Appointment 3: Chinedu Okon */}
-        <View style={mainStyles.patientCardContainer}>
-          <View style={mainStyles.patientCardHeaderRow}>
-            <View style={mainStyles.patientCardLeftSection}>
-              <View style={[mainStyles.needsAttentionAvatarBox, { backgroundColor: '#E0F2F1' }]}>
-                <Text style={mainStyles.needsAttentionAvatarText}>CO</Text>
-              </View>
-              <View style={mainStyles.patientCardDetails}>
-                <Text style={mainStyles.needsAttentionPatientName}>Chinedu Okon</Text>
-                <Text style={mainStyles.needsAttentionPatientSubText}>P-00798 • 10:30 AM</Text>
-                
-                <View style={mainStyles.patientCardBadgeRow}>
-                  <View style={mainStyles.badgeNoShow}>
-                    <Text style={mainStyles.badgeNoShowText}>No Show</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              style={mainStyles.compactOutlineButton}
-              onPress={() => router.push('/appointment-details')}
-            >
-              <Text style={mainStyles.compactOutlineButtonText}>View</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Appointment 4: Musa Ibrahim */}
-        <View style={mainStyles.patientCardContainer}>
-          <View style={mainStyles.patientCardHeaderRow}>
-            <View style={mainStyles.patientCardLeftSection}>
-              <View style={[mainStyles.needsAttentionAvatarBox, { backgroundColor: '#E0F2F1' }]}>
-                <Text style={mainStyles.needsAttentionAvatarText}>MI</Text>
-              </View>
-              <View style={mainStyles.patientCardDetails}>
-                <Text style={mainStyles.needsAttentionPatientName}>Musa Ibrahim</Text>
-                <Text style={mainStyles.needsAttentionPatientSubText}>P-00456 • 11:45 AM</Text>
-                
-                <View style={mainStyles.patientCardBadgeRow}>
-                  <View style={mainStyles.badgeCheckedIn}>
-                    <Text style={mainStyles.badgeCheckedInText}>Checked In</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              style={mainStyles.compactOutlineButton}
-              onPress={() => router.push('/appointment-details')}
-            >
-              <Text style={mainStyles.compactOutlineButtonText}>View</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+          );
+        })}
 
       </ScrollView>
     </SafeAreaView>

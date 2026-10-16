@@ -13,14 +13,29 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { mainStyles } from "../../styles/main";
 
+// Zustand store import
+import { useAppStore } from "../store/useAppStore";
+
 export default function TriageAssessmentScreen() {
   const router = useRouter();
+
+  // Pull active patient & update action from Zustand
+  const patients = useAppStore((state) => state.patients);
+  const selectedPatientId = useAppStore((state) => state.selectedPatientId);
+  const updatePatient = useAppStore((state) => state.updatePatient);
+
+  // Find current active patient data or fallback
+  const patient = patients.find((p) => p.id === selectedPatientId) || patients[0] || {
+    id: 'P-00123',
+    name: 'Sarah Ahmed',
+    avatarText: 'SA',
+  };
 
   // Modal Visibility States
   const [modalVisible, setModalVisible] = useState(false);
   const [isSuccessModal, setIsSuccessModal] = useState(false);
 
-  // Form State
+  // Form State initialized with existing patient values if present
   const [systolic, setSystolic] = useState("");
   const [diastolic, setDiastolic] = useState("");
   const [temperature, setTemperature] = useState("");
@@ -35,8 +50,30 @@ export default function TriageAssessmentScreen() {
   const [painScore, setPainScore] = useState("");
   const [otherNotes, setOtherNotes] = useState("");
 
-  // Handle step 1 confirm -> transition to step 2 success modal
+  // Helper function to save vitals into Zustand while preserving unmodified fields
+  const saveTriageData = (newStatus: string) => {
+    if (selectedPatientId) {
+      const currentPatient = patients.find((p) => p.id === selectedPatientId);
+
+      updatePatient(selectedPatientId, {
+        bloodPressure: systolic && diastolic ? `${systolic}/${diastolic} mmHg` : currentPatient?.bloodPressure,
+        pulseRate: pulse ? `${pulse} bpm` : currentPatient?.pulseRate,
+        temperature: temperature ? `${temperature} °C` : currentPatient?.temperature,
+        respiratoryRate: respiratoryRate ? `${respiratoryRate} /min` : currentPatient?.respiratoryRate,
+        status: newStatus,
+      });
+    }
+  };
+
+  // Handle Save Draft -> saves data and returns to queue
+  const handleSaveDraft = () => {
+    saveTriageData('Active');
+    router.push("/queue");
+  };
+
+  // Handle step 1 confirm -> save data & transition to success modal
   const handleConfirmComplete = () => {
+    saveTriageData('Active');
     setIsSuccessModal(true);
   };
 
@@ -118,15 +155,15 @@ export default function TriageAssessmentScreen() {
               <Text
                 style={[mainStyles.needsAttentionAvatarText, { fontSize: 14 }]}
               >
-                SA
+                {patient.avatarText || 'SA'}
               </Text>
             </View>
             <View style={mainStyles.patientCardDetails}>
               <Text style={mainStyles.needsAttentionPatientName}>
-                Sarah Ahmed
+                {patient.name}
               </Text>
               <Text style={mainStyles.needsAttentionPatientSubText}>
-                Patient ID: P-00123
+                Patient ID: {patient.id}
               </Text>
               <Text style={mainStyles.needsAttentionPatientSubText}>
                 General Consultation
@@ -153,7 +190,7 @@ export default function TriageAssessmentScreen() {
               <View style={mainStyles.inputWithUnitContainer}>
                 <TextInput
                   style={mainStyles.inputWithUnitText}
-                  placeholder="input"
+                  placeholder="sys"
                   placeholderTextColor="#999999"
                   value={systolic}
                   onChangeText={setSystolic}
@@ -162,7 +199,7 @@ export default function TriageAssessmentScreen() {
                 <Text style={mainStyles.bpSlashText}>/</Text>
                 <TextInput
                   style={mainStyles.inputWithUnitText}
-                  placeholder="input"
+                  placeholder="dia"
                   placeholderTextColor="#999999"
                   value={diastolic}
                   onChangeText={setDiastolic}
@@ -379,7 +416,7 @@ export default function TriageAssessmentScreen() {
         <View style={mainStyles.detailBottomButtonsRow}>
           <TouchableOpacity
             style={mainStyles.detailOutlineButton}
-            onPress={() => router.push("/queue")}
+            onPress={handleSaveDraft}
           >
             <Text style={mainStyles.detailOutlineButtonText}>Save Draft</Text>
           </TouchableOpacity>
@@ -417,8 +454,8 @@ export default function TriageAssessmentScreen() {
                 <Text style={mainStyles.modalTitle}>Complete Triage?</Text>
 
                 <Text style={mainStyles.modalDescription}>
-                  You are about to complete triage for Sarah Ahmed (Patient ID:
-                  P-00123).{"\n\n"}
+                  You are about to complete triage for {patient.name} (Patient ID:
+                  {patient.id}).{"\n\n"}
                   Her recorded vitals, observations and nursing notes will be
                   saved and the patient will be marked as{" "}
                   <Text style={mainStyles.modalBoldText}>Ready for Doctor</Text>
@@ -455,7 +492,7 @@ export default function TriageAssessmentScreen() {
                 <Text style={mainStyles.modalTitle}>Triage Completed</Text>
 
                 <Text style={mainStyles.modalSubtitleText}>
-                  Sarah Ahmed (P-00123) has been sent to doctor queue.
+                  {patient.name} ({patient.id}) has been sent to doctor queue.
                 </Text>
 
                 <View style={mainStyles.modalStatusCard}>

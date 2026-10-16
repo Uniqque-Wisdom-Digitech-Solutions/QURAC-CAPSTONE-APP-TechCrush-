@@ -5,13 +5,27 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { mainStyles } from '../../../styles/main';
 
+// Zustand store import
+import { useAppStore } from '../../store/useAppStore';
+
 export default function PatientQueueScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
+  // Pull live patients data and actions from Zustand store
+  const patients = useAppStore((state) => state.patients);
+  const setSelectedPatient = useAppStore((state) => state.setSelectedPatient);
+
+  // Filter patients based on search input (name or ID)
+  const filteredQueue = patients.filter(
+    (patient) =>
+      patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      patient.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <SafeAreaView style={mainStyles.safeArea}>
-      <ScrollView style={mainStyles.container}>
+      <ScrollView style={mainStyles.container} contentContainerStyle={{ paddingBottom: 100 }}>
         
         {/* Top Brand Header */}
         <View style={mainStyles.brandHeaderRow}>
@@ -37,7 +51,7 @@ export default function PatientQueueScreen() {
         <Text style={mainStyles.greetingTitle}>Patient Queue</Text>
         <Text style={mainStyles.greetingSubtitle}>Manage patients waiting for triage.</Text>
 
-        {/* 2x2 Metric Cards Grid */}
+        {/* 2x2 Metric Cards Grid (Dynamic from Zustand) */}
         <View style={mainStyles.queueGridContainer}>
           <View style={mainStyles.queueGridRow}>
             
@@ -45,7 +59,7 @@ export default function PatientQueueScreen() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <View>
                   <Text style={mainStyles.metricCardLabel}>All Patients</Text>
-                  <Text style={mainStyles.queueMetricValue}>5</Text>
+                  <Text style={mainStyles.queueMetricValue}>{patients.length}</Text>
                 </View>
                 <MaterialCommunityIcons name="account-group" size={20} color="#063154" />
               </View>
@@ -55,7 +69,9 @@ export default function PatientQueueScreen() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <View>
                   <Text style={mainStyles.metricCardLabel}>Awaiting Triage</Text>
-                  <Text style={[mainStyles.queueMetricValue, { color: '#D32F2F' }]}>3</Text>
+                  <Text style={[mainStyles.queueMetricValue, { color: '#D32F2F' }]}>
+                    {patients.filter((p) => p.status === 'Upcoming').length}
+                  </Text>
                 </View>
                 <Ionicons name="time-outline" size={20} color="#D32F2F" />
               </View>
@@ -69,7 +85,9 @@ export default function PatientQueueScreen() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <View>
                   <Text style={mainStyles.metricCardLabel}>In Triage</Text>
-                  <Text style={[mainStyles.queueMetricValue, { color: '#2F9094' }]}>2</Text>
+                  <Text style={[mainStyles.queueMetricValue, { color: '#2F9094' }]}>
+                    {patients.filter((p) => p.status === 'Needs Attention' || p.status === 'Active').length}
+                  </Text>
                 </View>
                 <Ionicons name="pulse" size={20} color="#2F9094" />
               </View>
@@ -100,121 +118,53 @@ export default function PatientQueueScreen() {
           />
         </View>
 
-        {/* Patient 1: Amu Yusuf */}
-        <View style={mainStyles.patientCardContainer}>
-          <View style={mainStyles.patientCardHeaderRow}>
-            <View style={mainStyles.patientCardLeftSection}>
-              <View style={[mainStyles.needsAttentionAvatarBox, { backgroundColor: '#E0F2F1' }]}>
-                <Text style={mainStyles.needsAttentionAvatarText}>AY</Text>
-              </View>
-              <View style={mainStyles.patientCardDetails}>
-                <Text style={mainStyles.needsAttentionPatientName}>Amu Yusuf</Text>
-                <Text style={mainStyles.needsAttentionPatientSubText}>P-00124 • <Text style={{ color: '#D32F2F', fontWeight: 'bold' }}>18 min waiting</Text></Text>
-                
-                <View style={mainStyles.patientCardBadgeRow}>
-                  <View style={[mainStyles.badgeHigh, { marginRight: 8 }]}>
-                    <Text style={mainStyles.badgeHighText}>High</Text>
+        {/* Dynamically Rendered Queue List from Zustand */}
+        {filteredQueue.map((patient) => {
+          // Determine dynamic color scheme based on patient status
+          const isNeedsAttention = patient.status === 'Needs Attention';
+          const isActive = patient.status === 'Active';
+
+          const badgeBg = isNeedsAttention ? '#FFEBEE' : isActive ? '#E0F2F1' : '#FFF9C4';
+          const badgeColor = isNeedsAttention ? '#D32F2F' : isActive ? '#00796B' : '#F57F17';
+
+          return (
+            <View key={patient.id} style={mainStyles.patientCardContainer}>
+              <View style={mainStyles.patientCardHeaderRow}>
+                <View style={mainStyles.patientCardLeftSection}>
+                  <View style={[mainStyles.needsAttentionAvatarBox, { backgroundColor: '#E0F2F1' }]}>
+                    <Text style={mainStyles.needsAttentionAvatarText}>{patient.avatarText}</Text>
                   </View>
-                  <Text style={mainStyles.statusReadyText}>Ready for Doctor</Text>
+                  <View style={mainStyles.patientCardDetails}>
+                    <Text style={mainStyles.needsAttentionPatientName}>{patient.name}</Text>
+                    <Text style={mainStyles.needsAttentionPatientSubText}>
+                      {patient.id} • {patient.gender}
+                    </Text>
+                    
+                    {/* Dynamic Color-Coded Status Badge */}
+                    <View style={{ marginTop: 4, alignSelf: 'flex-start' }}>
+                      <View style={{ backgroundColor: badgeBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 }}>
+                        <Text style={{ color: badgeColor, fontSize: 10, fontWeight: 'bold' }}>
+                          {patient.status}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
                 </View>
+
+                {/* View button now routes directly to clinical triage details */}
+                <TouchableOpacity 
+                  style={mainStyles.compactOutlineButton}
+                  onPress={() => {
+                    setSelectedPatient(patient.id);
+                    router.push('/patient-details');
+                  }}
+                >
+                  <Text style={mainStyles.compactOutlineButtonText}>View</Text>
+                </TouchableOpacity>
               </View>
             </View>
-
-            <TouchableOpacity 
-              style={mainStyles.compactOutlineButton}
-              onPress={() => router.push('/patient-details')}
-            >
-              <Text style={mainStyles.compactOutlineButtonText}>View</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Patient 2: Chinedu Okon */}
-        <View style={mainStyles.patientCardContainer}>
-          <View style={mainStyles.patientCardHeaderRow}>
-            <View style={mainStyles.patientCardLeftSection}>
-              <View style={[mainStyles.needsAttentionAvatarBox, { backgroundColor: '#F0F0F0' }]}>
-                <Text style={{ color: '#666', fontWeight: 'bold', fontSize: 12 }}>CO</Text>
-              </View>
-              <View style={mainStyles.patientCardDetails}>
-                <Text style={mainStyles.needsAttentionPatientName}>Chinedu Okon</Text>
-                <Text style={mainStyles.needsAttentionPatientSubText}>P-00345 • <Text style={{ color: '#D32F2F', fontWeight: 'bold' }}>18 min waiting</Text></Text>
-                
-                <View style={mainStyles.patientCardBadgeRow}>
-                  <View style={[mainStyles.badgeNormal, { marginRight: 8 }]}>
-                    <Text style={mainStyles.badgeNormalText}>Normal</Text>
-                  </View>
-                  <Text style={mainStyles.statusInTriageText}>In Triage</Text>
-                </View>
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              style={mainStyles.compactGreenButton}
-              onPress={() => router.push('/patient-details')}
-            >
-              <Text style={mainStyles.compactGreenButtonText}>Continue</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Patient 3: Fatimah Bello */}
-        <View style={mainStyles.patientCardContainer}>
-          <View style={mainStyles.patientCardHeaderRow}>
-            <View style={mainStyles.patientCardLeftSection}>
-              <View style={[mainStyles.needsAttentionAvatarBox, { backgroundColor: '#F0F0F0' }]}>
-                <Text style={{ color: '#666', fontWeight: 'bold', fontSize: 12 }}>FB</Text>
-              </View>
-              <View style={mainStyles.patientCardDetails}>
-                <Text style={mainStyles.needsAttentionPatientName}>Fatimah Bello</Text>
-                <Text style={mainStyles.needsAttentionPatientSubText}>P-00456 • <Text style={{ color: '#D32F2F', fontWeight: 'bold' }}>10 min waiting</Text></Text>
-                
-                <View style={mainStyles.patientCardBadgeRow}>
-                  <View style={[mainStyles.badgeNormal, { marginRight: 8 }]}>
-                    <Text style={mainStyles.badgeNormalText}>Normal</Text>
-                  </View>
-                  <Text style={mainStyles.statusInTriageText}>In Triage</Text>
-                </View>
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              style={mainStyles.compactGreenButton}
-              onPress={() => router.push('/patient-details')}
-            >
-              <Text style={mainStyles.compactGreenButtonText}>Continue</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Patient 4: Aisha Ibrahim */}
-        <View style={mainStyles.patientCardContainer}>
-          <View style={mainStyles.patientCardHeaderRow}>
-            <View style={mainStyles.patientCardLeftSection}>
-              <View style={[mainStyles.needsAttentionAvatarBox, { backgroundColor: '#E0F2F1' }]}>
-                <Text style={mainStyles.needsAttentionAvatarText}>AI</Text>
-              </View>
-              <View style={mainStyles.patientCardDetails}>
-                <Text style={mainStyles.needsAttentionPatientName}>Aisha Ibrahim</Text>
-                <Text style={mainStyles.needsAttentionPatientSubText}>P-00987 • <Text style={{ color: '#2E7D32', fontWeight: 'bold' }}>5 min waiting</Text></Text>
-                
-                <View style={mainStyles.patientCardBadgeRow}>
-                  <View style={[mainStyles.badgeHigh, { marginRight: 8 }]}>
-                    <Text style={mainStyles.badgeHighText}>High</Text>
-                  </View>
-                  <Text style={mainStyles.statusReadyText}>Ready for Doctor</Text>
-                </View>
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              style={mainStyles.compactOutlineButton}
-              onPress={() => router.push('/patient-details')}
-            >
-              <Text style={mainStyles.compactOutlineButtonText}>View</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+          );
+        })}
 
       </ScrollView>
     </SafeAreaView>
